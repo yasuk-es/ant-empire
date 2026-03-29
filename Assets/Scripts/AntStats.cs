@@ -1,55 +1,71 @@
-// Sistema de estadísticas de las hormigas
+using System;
 
+// Clase que maneja todas las estadísticas de la hormiga
 public class AntStats
 {
-    // Salud de la hormiga
-    public int Health { get; set; }
+    // Vida máxima
+    public int MaxHealth { get; set; }
 
-    // Ataque de la hormiga
+    // Vida actual
+    public int CurrentHealth { get; set; }
+
+    // Ataque
     public int Attack { get; set; }
 
-    // Defensa de la hormiga
+    // Defensa
     public int Defense { get; set; }
 
-    // Velocidad de la hormiga
+    // Velocidad (define el orden de turnos)
     public int Speed { get; set; }
 
-    // Experiencia de la hormiga
+    // Experiencia acumulada
     public int Experience { get; set; }
 
-    // Nivel de la hormiga
+    // Nivel actual
     public int Level { get; set; }
 
     // Constructor
     public AntStats(int health, int attack, int defense, int speed)
     {
-        Health = health;
+        MaxHealth = health;
+        CurrentHealth = health; // Al iniciar, la vida actual es igual a la máxima
         Attack = attack;
         Defense = defense;
         Speed = speed;
-        Experience = 0; // La experiencia inicial es 0
-        Level = 1; // La hormiga comienza en el nivel 1
+        Experience = 0;
+        Level = 1;
     }
 
-    // Método para aplicar daño a la hormiga
+    // Aplica daño considerando la defensa
     public void TakeDamage(int damage)
     {
-        int damageTaken = damage - Defense; // Aplicar defensa
-        if (damageTaken > 0)
-        {
-            Health -= damageTaken; // Restar la salud
-        }
+        // Calcula el daño final
+        int finalDamage = Math.Max(damage - Defense, 0);
+
+        // Reduce la vida actual
+        CurrentHealth -= finalDamage;
+
+        // Evita valores negativos
+        if (CurrentHealth < 0)
+            CurrentHealth = 0;
     }
 
-    // Método para aumentar la experiencia y nivel
+    // Verifica si la hormiga sigue viva
+    public bool IsAlive()
+    {
+        return CurrentHealth > 0;
+    }
+
+    // Añade experiencia y gestiona subida de nivel
     public void GainExperience(int amount)
     {
         Experience += amount;
-        // Lógica para aumentar el nivel según la experiencia
-        if (Experience >= 100) // Por ejemplo, cada 100 puntos de experiencia se sube de nivel
+
+        // Cada 100 de experiencia sube de nivel
+        if (Experience >= 100)
         {
             Level++;
-            Experience -= 100; // Restar experiencia al nivel siguiente
+            Experience -= 100;
         }
     }
 }
