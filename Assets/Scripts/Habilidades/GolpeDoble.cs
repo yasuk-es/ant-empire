@@ -11,20 +11,20 @@ public class GolpeDoble : Habilidad
     // Constructor: enfriamiento de 2 turnos
     public GolpeDoble() : base("Golpe Doble", 2) { }
 
-    public override void Usar(Hormiga lanzador, Hormiga objetivo, List<Hormiga> aliados, List<Enemigo> enemigos)
+    public override void Usar(Hormiga lanzador, Enemigo objetivoEnemigo, List<Hormiga> aliados, List<Enemigo> enemigos)
     {
         // Primer golpe: siempre ocurre
-        objetivo.RecibirDaño(lanzador.Stats.Ataque);
-        Debug.Log($"{lanzador.Nombre} golpea a {objetivo.Nombre}!");
-
-        // Lanza un número aleatorio para ver si hay segundo golpe
-        float tirada = Random.value;
-
-        // Si la tirada es menor a la probabilidad, golpea una segunda vez
-        if (tirada < probabilidadSegundoGolpe)
+        if (objetivoEnemigo != null)
         {
-            objetivo.RecibirDaño(lanzador.Stats.Ataque);
-            Debug.Log($"{lanzador.Nombre} golpea de nuevo! (golpe doble)");
+            objetivoEnemigo.Stats.RecibirDaño(lanzador.Stats.Ataque);
+            Debug.Log($"{lanzador.Nombre} golpea a {objetivoEnemigo.Nombre}!");
+
+            // Lanza un número aleatorio para ver si hay segundo golpe
+            if (Random.value < probabilidadSegundoGolpe)
+            {
+                objetivoEnemigo.Stats.RecibirDaño(lanzador.Stats.Ataque);
+                Debug.Log($"{lanzador.Nombre} golpea de nuevo! (golpe doble)");
+            }
         }
 
         // Activa el enfriamiento

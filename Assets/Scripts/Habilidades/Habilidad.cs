@@ -41,6 +41,6 @@ public abstract class Habilidad
     }
 
     // Método que cada habilidad implementa con su lógica propia
-    // Recibe quien la usa, el objetivo, y las listas de aliados y enemigos (para curar)
-    public abstract void Usar(Hormiga lanzador, Hormiga objetivo, List<Hormiga> aliados, List<Enemigo> enemigos);
+    // objetivoEnemigo: el enemigo al que se ataca (null si la habilidad es de soporte)
+    public abstract void Usar(Hormiga lanzador, Enemigo objetivoEnemigo, List<Hormiga> aliados, List<Enemigo> enemigos);
 }

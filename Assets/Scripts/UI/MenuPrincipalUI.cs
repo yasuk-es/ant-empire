@@ -14,7 +14,11 @@ public class MenuPrincipalUI : MonoBehaviour
     // Llamado cuando el jugador presiona el botón "Salir"
     public void OnBotonSalir()
     {
-        // Cierra la aplicación (en el editor solo detiene el play)
+        // En el editor detiene el Play, en el dispositivo cierra la app
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
         Application.Quit();
+        #endif
     }
 }

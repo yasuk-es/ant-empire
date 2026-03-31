@@ -1,0 +1,123 @@
+====================================================
+  ANT EMPIRE - REGISTRO DE CAMBIOS
+====================================================
+
+----------------------------------------------------
+[v0.1.0] - 2026-03-29 - Estructura base del proyecto
+----------------------------------------------------
+
+LIMPIEZA
+  - Eliminados scripts inconsistentes generados por IA:
+    Ant.cs, AntStats.cs, BattleSystem.cs, Skill.cs, GameManager.cs (versión vieja)
+
+NUEVOS ARCHIVOS
+
+  Hormigas/
+  - EstadisticasHormiga.cs  : vida, ataque, defensa, velocidad. Métodos RecibirDaño, Curar, EstaViva
+  - RolHormiga.cs           : enum con roles Tanque, Luchador, Soporte
+  - Hormiga.cs              : clase principal de unidad aliada con nombre, rol, stats y habilidades
+
+  Enemigos/
+  - Enemigo.cs              : clase de unidad enemiga con soporte para aturdimiento
+
+  Habilidades/
+  - Habilidad.cs            : clase abstracta base con sistema de enfriamiento
+  - AtaqueBasico.cs         : ataque sin enfriamiento, disponible para todos los roles
+  - GolpeAturdidor.cs       : habilidad del Tanque, 50% de chance de aturdir (CD: 3 turnos)
+  - GolpeDoble.cs           : habilidad del Luchador, 10% de chance de golpear dos veces (CD: 2 turnos)
+  - Curar.cs                : habilidad del Soporte, cura al aliado con menos vida (CD: 3 turnos)
+
+  Combate/
+  - SistemaCombate.cs       : sistema de turnos por velocidad, modo manual y automático
+  - FabricaEnemigos.cs      : crea enemigos según escenario (Slimes / Larvas / Arañas)
+
+  Core/
+  - GameManager.cs          : Singleton, roster de 6 hormigas (2 por rol), navegación entre escenas
+
+  UI/
+  - MenuPrincipalUI.cs      : botones Jugar y Salir
+  - MapaUI.cs               : botones para elegir entre 3 escenarios
+  - SeleccionUI.cs          : selección de 1 hormiga por rol antes del combate
+  - CombateUI.cs            : HUD de combate, botones de habilidades, toggle manual/automático,
+                              panel de resultado con botones Siguiente / Repetir / Menú
+
+CORRECCIONES
+  - GolpeAturdidor usaba enemigo.Stats.Aturdido (incorrecto), corregido a enemigo.Aturdido
+  - FindObjectOfType reemplazado por FindFirstObjectByType (API actualizada en Unity 6)
+  - CombateUI.cs tenía problema de escritura en disco, resuelto con script PowerShell externo
+
+ESCENARIOS DEFINIDOS
+  - Escenario 1: 3 Slimes   (vida 40, ataque 8,  defensa 2, velocidad 4)
+  - Escenario 2: 3 Larvas   (vida 60, ataque 12, defensa 4, velocidad 6)
+  - Escenario 3: 3 Arañas   (vida 80, ataque 18, defensa 6, velocidad 10)
+
+----------------------------------------------------
+[v0.2.0] - 2026-03-29 - Escenas de Unity armadas
+----------------------------------------------------
+
+ESCENAS CREADAS
+  - MenuPrincipal : Canvas con TituloTexto, BotonJugar, BotonSalir
+                    GameObject GameManager con script GameManager
+                    GameObject MenuPrincipalManager con script MenuPrincipalUI
+                    Botones conectados a OnBotonJugar / OnBotonSalir
+
+  - Mapa          : Canvas con BotonEscenario1/2/3 y BotonVolver
+                    GameObject MapaManager con script MapaUI
+                    Botones conectados a OnBotonEscenario1/2/3 y OnBotonVolver
+
+  - Seleccion     : Canvas con 6 botones de hormiga (indices 0-5), BotonConfirmar, BotonVolver
+                    TextoSeleccion conectado al script
+                    GameObject SeleccionManager con script SeleccionUI
+                    Botones de hormiga conectados a OnSeleccionarHormiga(int)
+
+  - Combate       : En construccion
+                    Canvas con sliders de vida y nombres para 3 hormigas y 3 enemigos
+                    PanelHabilidades con BotonHabilidad1 y BotonHabilidad2
+                    Toggle de modo automatico/manual
+                    PanelResultado con TextoResultado, BotonSiguiente, BotonRepetir, BotonMenu
+                    GameObject CombateManager con scripts SistemaCombate y CombateUI
+
+PENDIENTE
+  - Conectar todos los elementos de la escena Combate al script CombateUI en el Inspector
+  - Agregar sprites de personajes y enemigos
+  - Testear flujo completo: MenuPrincipal → Mapa → Seleccion → Combate → resultado
+
+====================================================
+
+----------------------------------------------------
+[v0.2.0] - 2026-03-29 - Escenas armadas en Unity
+----------------------------------------------------
+
+ESCENAS CREADAS
+  - MenuPrincipal : Canvas con TituloTexto, BotonJugar, BotonSalir
+                    GameObject GameManager con script GameManager
+                    GameObject MenuPrincipalManager con script MenuPrincipalUI
+                    Botones conectados a OnBotonJugar() y OnBotonSalir()
+
+  - Mapa          : Canvas con BotonEscenario1/2/3 y BotonVolver
+                    GameObject MapaManager con script MapaUI
+                    Botones conectados a OnBotonEscenario1/2/3() y OnBotonVolver()
+
+  - Seleccion     : Canvas con 6 botones de hormiga (indices 0-5), BotonConfirmar, BotonVolver
+                    TextoSeleccion mostrando "Seleccionadas: 0/3"
+                    GameObject SeleccionManager con script SeleccionUI
+                    Botones de hormiga conectados a OnSeleccionarHormiga(int) con indices 0 al 5
+                    BotonConfirmar y BotonVolver conectados a sus metodos correspondientes
+
+  - Combate       : En construccion
+                    Canvas con sliders y nombres para 3 hormigas y 3 enemigos
+                    PanelHabilidades con BotonHabilidad1 y BotonHabilidad2
+                    Toggle de modo automatico/manual con TextoModo
+                    PanelResultado con TextoResultado, BotonSiguiente, BotonRepetir, BotonMenu
+                    GameObject CombateManager con scripts SistemaCombate y CombateUI
+
+CORRECCIONES
+  - BotonJugar y BotonSalir inicialmente creados como Text en vez de Button, recreados correctamente
+  - Aclarado que Int32 e int son equivalentes en el dropdown de Unity
+
+PENDIENTE
+  - Terminar de conectar la escena Combate al Inspector
+  - Agregar sprites de personajes y enemigos
+  - Testear flujo completo MenuPrincipal → Mapa → Seleccion → Combate → resultado
+
+====================================================

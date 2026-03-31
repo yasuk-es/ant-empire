@@ -1,45 +1,46 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 // Controla toda la interfaz visual del combate
 // Layout lateral: hormigas izquierda, enemigos derecha (estilo Darkest Dungeon)
-// Mecánica de turnos por velocidad (estilo Summoners War)
 public class CombateUI : MonoBehaviour
 {
-    // Referencia al sistema de combate
     private SistemaCombate sistemaCombate;
 
-    // ── UNIDADES ──────────────────────────────────────────────
-    // Barras de vida de las 3 hormigas (lado izquierdo)
+    // Barras de vida de las 3 hormigas (solo lectura, no interactuables)
     [SerializeField] private Slider[] barrasVidaHormigas;
     [SerializeField] private TextMeshProUGUI[] nombresHormigas;
 
-    // Barras de vida de los 3 enemigos (lado derecho)
+    // Barras de vida de los 3 enemigos (solo lectura)
     [SerializeField] private Slider[] barrasVidaEnemigos;
     [SerializeField] private TextMeshProUGUI[] nombresEnemigos;
 
-    // ── HABILIDADES ───────────────────────────────────────────
-    // Panel con los 2 botones de habilidades (visible solo en turno manual)
+    // Flechas de seleccion de enemigo (una por enemigo, se activa la seleccionada)
+    [SerializeField] private GameObject[] flechasEnemigos;
+
+    // Panel con los 2 botones de habilidades
     [SerializeField] private GameObject panelHabilidades;
     [SerializeField] private Button[] botonesHabilidades;
     [SerializeField] private TextMeshProUGUI[] textosHabilidades;
 
-    // ── MODO AUTOMÁTICO ───────────────────────────────────────
-    // Toggle para cambiar entre manual y automático en cualquier momento
+    // Toggle para cambiar entre manual y automatico
     [SerializeField] private Toggle toggleAutomatico;
     [SerializeField] private TextMeshProUGUI textoModo;
 
-    // ── RESULTADO ─────────────────────────────────────────────
+    // Panel de resultado
     [SerializeField] private GameObject panelResultado;
     [SerializeField] private TextMeshProUGUI textoResultado;
     [SerializeField] private Button botonSiguiente;
     [SerializeField] private Button botonRepetir;
     [SerializeField] private Button botonMenu;
 
-    // Hormiga cuyo turno está activo
+    // Hormiga cuyo turno esta activo
     private Hormiga hormigaActual;
+
+    // Indice del enemigo seleccionado como objetivo
+    private int indiceEnemigoSeleccionado = 0;
 
     void Start()
     {
@@ -48,10 +49,21 @@ public class CombateUI : MonoBehaviour
         panelHabilidades.SetActive(false);
         toggleAutomatico.onValueChanged.AddListener(OnToggleAutomatico);
         ActualizarTextoModo(false);
+
+        // Desactiva la interaccion de todos los sliders para que no sean modificables
+        BloquearSliders();
     }
 
+    // Desactiva la interaccion de los sliders (el jugador no puede moverlos)
+    void BloquearSliders()
+    {
+        foreach (var s in barrasVidaHormigas)
+            if (s != null) s.interactable = false;
+        foreach (var s in barrasVidaEnemigos)
+            if (s != null) s.interactable = false;
+    }
 
-    // Refresca todas las barras de vida (llamar después de cada acción)
+    // Refresca todas las barras de vida
     public void ActualizarUI(List<Hormiga> equipo, List<Enemigo> enemigos)
     {
         for (int i = 0; i < barrasVidaHormigas.Length; i++)
@@ -70,36 +82,73 @@ public class CombateUI : MonoBehaviour
         }
     }
 
-    // Muestra los botones de habilidades cuando es turno de una hormiga (modo manual)
+    // Muestra los botones de habilidades y selecciona el primer enemigo vivo
     public void MostrarTurnoJugador(Hormiga hormiga)
     {
         hormigaActual = hormiga;
         panelHabilidades.SetActive(true);
+
+        // Selecciona automaticamente el primer enemigo vivo
+        SeleccionarPrimerEnemigoVivo();
 
         for (int i = 0; i < botonesHabilidades.Length; i++)
         {
             if (i >= hormiga.Habilidades.Count) break;
             Habilidad hab = hormiga.Habilidades[i];
             bool disponible = hab.PuedeUsarse();
-            // Muestra el enfriamiento restante si no está lista
             textosHabilidades[i].text = disponible
                 ? hab.Nombre
-                : $"{hab.Nombre}\n(CD: {hab.EnfriamientoActual})";
+                : hab.Nombre + "\n(CD: " + hab.EnfriamientoActual + ")";
             botonesHabilidades[i].interactable = disponible;
         }
     }
 
-    // Oculta los botones de habilidades
+    // Selecciona el primer enemigo vivo y muestra su flecha
+    void SeleccionarPrimerEnemigoVivo()
+    {
+        var enemigos = sistemaCombate.enemigos;
+        for (int i = 0; i < enemigos.Count; i++)
+        {
+            if (enemigos[i].EstaVivo())
+            {
+                SeleccionarEnemigo(i);
+                return;
+            }
+        }
+    }
+
+    // Activa la flecha del enemigo seleccionado y desactiva las demas
+    void SeleccionarEnemigo(int indice)
+    {
+        indiceEnemigoSeleccionado = indice;
+        if (flechasEnemigos == null) return;
+        for (int i = 0; i < flechasEnemigos.Length; i++)
+        {
+            if (flechasEnemigos[i] != null)
+                flechasEnemigos[i].SetActive(i == indice);
+        }
+    }
+
+    // Llamado cuando el jugador toca el boton de un enemigo para seleccionarlo
+    public void OnSeleccionarEnemigo(int indice)
+    {
+        var enemigos = sistemaCombate.enemigos;
+        if (indice < enemigos.Count && enemigos[indice].EstaVivo())
+            SeleccionarEnemigo(indice);
+    }
+
+    // Oculta los botones de habilidades y las flechas
     public void OcultarHabilidades()
     {
         panelHabilidades.SetActive(false);
         hormigaActual = null;
+        // Oculta todas las flechas
+        if (flechasEnemigos != null)
+            foreach (var f in flechasEnemigos)
+                if (f != null) f.SetActive(false);
     }
 
-    // Botón 1: Ataque Básico
     public void OnBotonHabilidad1() { EjecutarHabilidadManual(0); }
-
-    // Botón 2: Habilidad especial con enfriamiento
     public void OnBotonHabilidad2() { EjecutarHabilidadManual(1); }
 
     void EjecutarHabilidadManual(int indice)
@@ -108,38 +157,40 @@ public class CombateUI : MonoBehaviour
         Habilidad habilidad = hormigaActual.Habilidades[indice];
         if (!habilidad.PuedeUsarse()) return;
 
-        // Primer enemigo vivo como objetivo
-        Enemigo objetivo = sistemaCombate.enemigos.Find(e => e.EstaVivo());
-        if (objetivo == null) return;
+        // Usa el enemigo seleccionado por el jugador con la flecha
+        var enemigos = sistemaCombate.enemigos;
+        Enemigo objetivo = null;
+        if (indiceEnemigoSeleccionado < enemigos.Count && enemigos[indiceEnemigoSeleccionado].EstaVivo())
+            objetivo = enemigos[indiceEnemigoSeleccionado];
+        else
+            objetivo = enemigos.Find(e => e.EstaVivo()); // fallback al primero vivo
 
+        if (objetivo == null) return;
         OcultarHabilidades();
         sistemaCombate.JugadorEligeHabilidad(hormigaActual, habilidad, objetivo);
     }
 
-    // Llamado cuando el jugador mueve el toggle de modo automático
+    // Llamado cuando el jugador mueve el toggle de modo automatico
     public void OnToggleAutomatico(bool activo)
     {
         sistemaCombate.CambiarModoAutomatico(activo);
         ActualizarTextoModo(activo);
-
-        // Si se activa el auto mientras hay botones visibles, continúa el turno solo
         if (activo && hormigaActual != null)
         {
-            Hormiga hormiga = hormigaActual;
+            Hormiga h = hormigaActual;
             OcultarHabilidades();
-            sistemaCombate.EjecutarTurnoAutomaticoDesdeUI(hormiga);
+            sistemaCombate.EjecutarTurnoAutomaticoDesdeUI(h);
         }
     }
 
     void ActualizarTextoModo(bool automatico)
     {
-        textoModo.text = automatico ? "Modo: Automático" : "Modo: Manual";
+        textoModo.text = automatico ? "Modo: Automatico" : "Modo: Manual";
     }
 
-    // Feedback cuando un enemigo ataca (aquí se puede agregar animación después)
     public void MostrarAtaqueEnemigo(Enemigo atacante, Hormiga objetivo)
     {
-        Debug.Log($"{atacante.Nombre} ataca a {objetivo.Nombre}!");
+        Debug.Log(atacante.Nombre + " ataca a " + objetivo.Nombre + "!");
     }
 
     // Muestra el panel de resultado al terminar la batalla
@@ -147,29 +198,17 @@ public class CombateUI : MonoBehaviour
     {
         OcultarHabilidades();
         panelResultado.SetActive(true);
-        textoResultado.text = victoria ? "¡Victoria!" : "Derrota...";
-
-        // "Siguiente" solo aparece en victoria y si hay escenario siguiente
+        textoResultado.text = victoria ? "Victoria!" : "Derrota...";
         int siguiente = GameManager.Instancia.EscenarioActual + 1;
         botonSiguiente.gameObject.SetActive(victoria && siguiente <= 3);
     }
 
-    // Botón "Siguiente escenario"
     public void OnBotonSiguiente()
     {
         GameManager.Instancia.GuardarEscenario(GameManager.Instancia.EscenarioActual + 1);
         GameManager.Instancia.IrASeleccion();
     }
 
-    // Botón "Repetir": mismo escenario, vuelve a selección
-    public void OnBotonRepetir()
-    {
-        GameManager.Instancia.IrASeleccion();
-    }
-
-    // Botón "Menú Principal"
-    public void OnBotonMenu()
-    {
-        GameManager.Instancia.IrAMenuPrincipal();
-    }
+    public void OnBotonRepetir() { GameManager.Instancia.IrASeleccion(); }
+    public void OnBotonMenu() { GameManager.Instancia.IrAMenuPrincipal(); }
 }

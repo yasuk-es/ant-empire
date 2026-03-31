@@ -11,28 +11,20 @@ public class GolpeAturdidor : Habilidad
     // Constructor: enfriamiento de 3 turnos
     public GolpeAturdidor() : base("Golpe Aturdidor", 3) { }
 
-    public override void Usar(Hormiga lanzador, Hormiga objetivo, List<Hormiga> aliados, List<Enemigo> enemigos)
+    public override void Usar(Hormiga lanzador, Enemigo objetivoEnemigo, List<Hormiga> aliados, List<Enemigo> enemigos)
     {
         // Aplica el daño normal del tanque
-        objetivo.RecibirDaño(lanzador.Stats.Ataque);
+        if (objetivoEnemigo != null)
+            objetivoEnemigo.Stats.RecibirDaño(lanzador.Stats.Ataque);
 
         // Lanza un número aleatorio entre 0 y 1
         float tirada = Random.value;
 
         // Si la tirada es menor a la probabilidad, el enemigo queda aturdido
-        if (tirada < probabilidadAturdimiento)
+        if (tirada < probabilidadAturdimiento && objetivoEnemigo != null)
         {
-            // Busca el enemigo correspondiente en la lista para marcarlo como aturdido
-            foreach (var enemigo in enemigos)
-            {
-                // Compara por nombre para encontrar al objetivo correcto
-                if (enemigo.Nombre == objetivo.Nombre)
-                {
-                    enemigo.Aturdido = true;
-                    Debug.Log($"{objetivo.Nombre} fue aturdido!");
-                    break;
-                }
-            }
+            objetivoEnemigo.Aturdido = true;
+            Debug.Log($"{objetivoEnemigo.Nombre} fue aturdido!");
         }
 
         // Activa el enfriamiento de la habilidad

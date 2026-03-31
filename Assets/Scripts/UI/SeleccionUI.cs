@@ -3,67 +3,79 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// Controla la pantalla de selección de hormigas
-// El jugador debe elegir exactamente 1 Tanque, 1 Luchador y 1 Soporte
-// Escena: Seleccion
+// Controla la pantalla de seleccion de hormigas
+// El jugador elige hasta 3 hormigas libremente (sin restriccion de rol)
+// Si clickea una ya seleccionada, se deselecciona
 public class SeleccionUI : MonoBehaviour
 {
-    // Hormigas actualmente seleccionadas (máximo 3, una por rol)
+    // Hormigas actualmente seleccionadas (maximo 3)
     private List<Hormiga> seleccionadas = new List<Hormiga>();
 
-    // Botón para confirmar la selección e ir al combate
+    // Boton para confirmar la seleccion
     [SerializeField] private Button botonConfirmar;
 
-    // Texto que muestra cuántas hormigas lleva seleccionadas
+    // Texto que muestra cuantas hormigas lleva seleccionadas
     [SerializeField] private TextMeshProUGUI textoSeleccion;
+
+    // Botones de cada hormiga para cambiar su color al seleccionar
+    [SerializeField] private Button[] botonesHormigas;
 
     void Start()
     {
-        // Al inicio el botón de confirmar está desactivado
         botonConfirmar.interactable = false;
         ActualizarTexto();
     }
 
-    // Llamado cuando el jugador toca una tarjeta de hormiga
-    // Recibe el índice de la hormiga en el roster del GameManager
+    // Llamado cuando el jugador toca una hormiga
     public void OnSeleccionarHormiga(int indice)
     {
         Hormiga hormiga = GameManager.Instancia.RosterCompleto[indice];
 
-        // Verifica si ya hay una hormiga del mismo rol seleccionada
-        bool yaHayDeEseRol = seleccionadas.Exists(h => h.Rol == hormiga.Rol);
-
-        if (yaHayDeEseRol)
+        // Si ya estaba seleccionada, la deselecciona
+        if (seleccionadas.Contains(hormiga))
         {
-            // Reemplaza la hormiga del mismo rol
-            seleccionadas.RemoveAll(h => h.Rol == hormiga.Rol);
+            seleccionadas.Remove(hormiga);
+            ActualizarColorBoton(indice, false);
+        }
+        else
+        {
+            // Solo agrega si hay menos de 3 seleccionadas
+            if (seleccionadas.Count < 3)
+            {
+                seleccionadas.Add(hormiga);
+                ActualizarColorBoton(indice, true);
+            }
         }
 
-        // Agrega la hormiga seleccionada
-        seleccionadas.Add(hormiga);
-
-        // Actualiza el texto y el botón
         ActualizarTexto();
-
-        // Activa el botón solo si hay exactamente 3 hormigas (una de cada rol)
+        // Activa confirmar cuando hay exactamente 3
         botonConfirmar.interactable = seleccionadas.Count == 3;
     }
 
-    // Actualiza el texto que muestra la selección actual
-    void ActualizarTexto()
+    // Cambia el color del boton para indicar si esta seleccionado o no
+    void ActualizarColorBoton(int indice, bool seleccionado)
     {
-        textoSeleccion.text = $"Seleccionadas: {seleccionadas.Count}/3";
+        if (botonesHormigas == null || indice >= botonesHormigas.Length) return;
+        var imagen = botonesHormigas[indice].GetComponent<Image>();
+        if (imagen == null) return;
+        // Seleccionado: amarillo | Deseleccionado: blanco
+        imagen.color = seleccionado ? new Color(1f, 0.9f, 0.3f) : Color.white;
     }
 
-    // Llamado cuando el jugador presiona "Confirmar"
+    // Actualiza el texto de seleccion
+    void ActualizarTexto()
+    {
+        textoSeleccion.text = "Seleccionadas: " + seleccionadas.Count + "/3";
+    }
+
+    // Confirmar: guarda seleccion y va al combate
     public void OnBotonConfirmar()
     {
-        // Guarda la selección en el GameManager y va al combate
         GameManager.Instancia.GuardarSeleccion(seleccionadas);
         GameManager.Instancia.IrACombate();
     }
 
-    // Llamado cuando el jugador presiona "Volver"
+    // Volver al mapa
     public void OnBotonVolver()
     {
         GameManager.Instancia.IrAMapa();
